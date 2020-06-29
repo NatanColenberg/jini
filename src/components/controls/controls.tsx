@@ -4,6 +4,8 @@ import TextField from "@material-ui/core/TextField";
 import AddIcon from "@material-ui/icons/PostAdd";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
+import "./controls.css";
+
 interface Props {
   item: string;
   allItems: string[];
@@ -32,9 +34,9 @@ export default function Controls(props: Props) {
         }}
       />
       <Button
+        className="controls-button"
         variant="contained"
         color="primary"
-        size="large"
         onClick={() => {
           props.onAdd();
         }}
@@ -44,16 +46,16 @@ export default function Controls(props: Props) {
         Add
       </Button>
       <Button
+        className="controls-button"
         variant="contained"
         color="secondary"
-        size="large"
         onClick={() => {
           props.onClear();
         }}
         startIcon={<DeleteIcon />}
         disabled={props.allItems.length === 0}
       >
-        Clear
+        Clear All
       </Button>
     </div>
   );

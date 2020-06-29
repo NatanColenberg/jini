@@ -1,0 +1,9 @@
+.controls-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.controls-button {
+    margin-left: 0.5rem !important;
+}

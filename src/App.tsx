@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
-import ItemList from "./components/itemList/ItemList";
+import ItemList from "./components/itemList/itemList";
 import Controls from "./components/controls/controls";
 import axios from "axios";
 
@@ -27,11 +28,24 @@ function App() {
   };
 
   const addNewItem = async () => {
-    const item = { title: newItem };
+    const item = { id: uuidv4(), title: newItem };
     const res = await axios.post(`http://localhost:8080/items`, item);
     if (res.status !== 200) {
       throw new Error(
         `Failed to add new Item. 
+        (Response Status = ${res.status} - ${res.statusText})`
+      );
+    }
+
+    setItems(res.data);
+    setNewItem("");
+  };
+
+  const removeItem = async (id: string) => {
+    const res = await axios.post(`http://localhost:8080/removeItem`, { id });
+    if (res.status !== 200) {
+      throw new Error(
+        `Failed to Remove Item. 
         (Response Status = ${res.status} - ${res.statusText})`
       );
     }
@@ -54,7 +68,7 @@ function App() {
 
   return (
     <div className="App">
-      <ItemList items={items} />
+      <ItemList items={items} onItemRemove={removeItem} />
       <Controls
         item={newItem}
         allItems={items}
