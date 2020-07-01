@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import ItemList from "./components/itemList/itemList";
 import Controls from "./components/controls/controls";
@@ -28,7 +27,7 @@ function App() {
   };
 
   const addNewItem = async () => {
-    const item = { id: uuidv4(), title: newItem };
+    const item = { title: newItem };
     const res = await axios.post(`http://localhost:8080/items`, item);
     if (res.status !== 200) {
       throw new Error(

@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -17,9 +19,14 @@ type Item struct {
 	Title string `json:"title"`
 }
 
-var items []Item = []Item{{ID: "1", Title: "Foo"}, {ID: "2", Title: "Bar"}, {ID: "3", Title: "Goo"}}
+var items []Item = []Item{{Title: "Foo"}, {Title: "Bar"}, {Title: "Goo"}}
 
 func main() {
+
+	// Assign random ID to default Items
+	for index := range items {
+		items[index].ID = getUUID()
+	}
 
 	// App Constance
 	const buildPath string = "build/"
@@ -45,8 +52,19 @@ func main() {
 		handlers.AllowedMethods([]string{"GET", "POST", "DELETE"}),
 	)
 
+	// Register Middleware
+	router.Use(loggingMiddleware)
+
 	// Run Server
-	if err := http.ListenAndServe(":"+strconv.Itoa(port), cors(router)); err != nil {
+	srv := &http.Server{
+		Handler: cors(router),
+		Addr:    ":" + strconv.Itoa(port),
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal("ListenAndServe error: ", err)
 	}
 }
@@ -54,17 +72,16 @@ func main() {
 // Handlers
 
 func getAllItems(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get All Items Requested")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
 }
 
 func addNewItem(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Add New Items Requested")
 
 	var newItem Item
 	json.NewDecoder(r.Body).Decode(&newItem)
-	fmt.Println("New Items = " + newItem.Title)
+	newItem.ID = getUUID()
+	fmt.Println("New Items = " + newItem.Title + ", ID = " + newItem.ID)
 
 	items = append(items, newItem)
 
@@ -73,11 +90,10 @@ func addNewItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func removeItem(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Removing Item Requested")
 
 	var itemToRemove Item
 	json.NewDecoder(r.Body).Decode(&itemToRemove)
-	fmt.Println("Item ti Remove = " + itemToRemove.ID)
+	fmt.Println("Item to Remove = " + itemToRemove.ID)
 
 	for index, item := range items {
 		if item.ID == itemToRemove.ID {
@@ -92,10 +108,32 @@ func removeItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func clearAllItems(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Clearing all Items")
 
 	items = []Item{}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
+}
+
+// Helper Methods
+
+func getUUID() string {
+	uuid, err := uuid.NewRandom()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	id := uuid.String()
+
+	return id
+}
+
+// Middleware Methods
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mes := "URI: " + r.RequestURI + ", RemoteAddr: " + r.RemoteAddr + ", Method:" + r.Method
+		log.Println(mes)
+		next.ServeHTTP(w, r)
+	})
 }
