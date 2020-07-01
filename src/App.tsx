@@ -11,8 +11,39 @@ function App() {
   const [newItem, setNewItem] = useState("");
 
   useEffect(() => {
+    wsConnect();
     getData();
   }, []);
+
+  const wsConnect = () => {
+    const socket = new WebSocket("ws://localhost:8080/ws");
+    console.log("Attempting Connection...");
+
+    socket.onopen = () => {
+      console.log("Successfully Connected!");
+      socket.send("Hi From Client");
+    };
+
+    socket.onclose = () => {
+      console.log("Connection Closed");
+    };
+
+    socket.onerror = (err) => {
+      console.log("Socket Error: ", err);
+    };
+
+    socket.onmessage = (mesEvt) => {
+      console.log(mesEvt.data);
+
+      switch (mesEvt.data) {
+        case "itemsUpdated":
+          getData();
+          break;
+        default:
+          break;
+      }
+    };
+  };
 
   const getData = async () => {
     const res = await axios.get(`http://localhost:8080/items`);
